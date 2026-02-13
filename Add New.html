@@ -4,20 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Mineral</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-section {
+            margin-bottom: 20px;
+        }
+        .details-section {
+            display: none;
+            margin-top: 30px;
+        }
+        .details-section.show {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        button {
+            background-color: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #5568d3;
+        }
+        #photoPreview {
+            max-width: 200px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        .success-message {
+            display: none;
+            color: #4caf50;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Add New Mineral</h1>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <label for="mineralName">Mineral Name:</label>
-        <input type="text" id="mineralName" name="mineralName" required><br><br>
+    <div class="form-container">
+        <h1>Add New Mineral</h1>
+        
+        <div class="upload-section">
+            <label for="photoUpload">Step 1: Upload Photo of Mineral *</label>
+            <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required>
+            <img id="photoPreview" style="display: none;">
+        </div>
 
-        <label for="mineralDetails">Mineral Details:</label><br>
-        <textarea id="mineralDetails" name="mineralDetails" rows="4" cols="50" required></textarea><br><br>
+        <form id="mineralForm" onsubmit="handleSubmit(event)">
+            <div class="details-section" id="detailsSection">
+                <h2>Step 2: Enter Mineral Details</h2>
+                
+                <label for="mineralName">Mineral Name *</label>
+                <input type="text" id="mineralName" name="mineralName" required>
 
-        <label for="photoUpload">Upload Photo:</label>
-        <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required><br><br>
+                <label for="countryOfOrigin">Country of Origin *</label>
+                <select id="countryOfOrigin" name="countryOfOrigin" required>
+                    <option value="">Select a country...</option>
+                    <option value="Afghanistan">Afghanistan</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Chile">Chile</option>
+                    <option value="China">China</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Finland">Finland</option>
+                    <option value="France">France</option>
+                    <option value="Germany">Germany</option>
+                    <option value="India">India</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Madagascar">Madagascar</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Myanmar">Myanmar</option>
+                    <option value="Peru">Peru</option>
+                    <option value="Russia">Russia</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="United States">United States</option>
+                    <option value="Zambia">Zambia</option>
+                    <option value="Zimbabwe">Zimbabwe</option>
+                    <option value="Other">Other</option>
+                </select>
 
-        <input type="submit" value="Submit">
-    </form>
+                <label for="mineralDetails">Description/Details</label>
+                <textarea id="mineralDetails" name="mineralDetails" placeholder="Enter additional details about this mineral..."></textarea>
+
+                <label for="mineralType">Mineral Type/Classification</label>
+                <input type="text" id="mineralType" name="mineralType" placeholder="e.g., Silicate, Oxide, Carbonate...">
+
+                <label for="colorDescription">Color Description</label>
+                <input type="text" id="colorDescription" name="colorDescription" placeholder="e.g., Clear, Blue, Red...">
+
+                <button type="submit">Submit Mineral</button>
+            </div>
+        </form>
+
+        <div class="success-message" id="successMessage">
+            ✓ Mineral added successfully!
+        </div>
+    </div>
+
+    <script>
+        const photoInput = document.getElementById('photoUpload');
+        const photoPreview = document.getElementById('photoPreview');
+        const detailsSection = document.getElementById('detailsSection');
+        const successMessage = document.getElementById('successMessage');
+
+        // Show details form when photo is uploaded
+        photoInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Display photo preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                // Show details section
+                detailsSection.classList.add('show');
+            } else {
+                photoPreview.style.display = 'none';
+                detailsSection.classList.remove('show');
+            }
+        });
+
+        // Handle form submission
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Collect form data
+            const mineralName = document.getElementById('mineralName').value;
+            const countryOfOrigin = document.getElementById('countryOfOrigin').value;
+            const mineralDetails = document.getElementById('mineralDetails').value;
+            const mineralType = document.getElementById('mineralType').value;
+            const colorDescription = document.getElementById('colorDescription').value;
+
+            // Here you would typically send this data to a server
+            console.log({
+                mineralName,
+                countryOfOrigin,
+                mineralDetails,
+                mineralType,
+                colorDescription
+            });
+
+            // Show success message
+            successMessage.style.display = 'block';
+            
+            // Reset form after 2 seconds
+            setTimeout(() => {
+                document.getElementById('mineralForm').reset();
+                photoInput.value = '';
+                photoPreview.style.display = 'none';
+                detailsSection.classList.remove('show');
+                successMessage.style.display = 'none';
+            }, 2000);
+        }
+    </script>
 </body>
 </html>
