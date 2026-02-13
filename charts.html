@@ -79,13 +79,7 @@
     </style>
 </head>
 <body>
-    <h1>Add New Mineral</h1>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <label for="mineralName">Mineral Name:</label>
-        <input type="text" id="mineralName" name="mineralName" required><br><br>
-    <div class="form-container">
-        <h1>Add New Mineral</h1>
-        
+          
         <div class="upload-section">
             <label for="photoUpload">Step 1: Upload Photo of Mineral *</label>
             <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required>
@@ -95,7 +89,7 @@
         <label for="mineralDetails">Mineral Details:</label><br>
         <textarea id="mineralDetails" name="mineralDetails" rows="4" cols="50" required></textarea><br><br>
         <form id="mineralForm" onsubmit="handleSubmit(event)">
-            <div class="details-section" id="detailsSection">
+           
                 <h2>Step 2: Enter Mineral Details</h2>
                 
                 <label for="mineralName">Mineral Name *</label>
