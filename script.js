@@ -1,32 +1,45 @@
-// script.js
+const minerals = [
+    {
+        name: "Quartz",
+        image: "url/to/quartz-photo.jpg",
+        info: "Quartz is one of the most abundant minerals in Earth's crust."
+    },
+    {
+        name: "Mica",
+        image: "url/to/mica-photo.jpg",
+        info: "Mica is a shiny silicate mineral that can be split into thin sheets."
+    },
+    {
+        name: "Feldspar",
+        image: "url/to/feldspar-photo.jpg",
+        info: "Feldspar is the name given to a group of minerals that are all similar."
+    }
+];
 
-// Load mineral data
-async function loadMinerals() {
-    const response = await fetch('path/to/mineral/data.json');
-    const minerals = await response.json();
-    displayMineralCards(minerals);
-}
-
-// Display mineral cards
-function displayMineralCards(minerals) {
-    const container = document.getElementById('mineral-cards-container');
+// Function to display minerals
+function displayMinerals() {
+    const container = document.getElementById("minerals-container");
+    
     minerals.forEach(mineral => {
-        const card = document.createElement('div');
-        card.className = 'mineral-card';
-        card.innerHTML = `<h3>${mineral.name}</h3>\n            <img src='${mineral.photo}' alt='${mineral.name}'>\n            <p>${mineral.description}</p>`;
-        container.appendChild(card);
+        const mineralDiv = document.createElement("div");
+        mineralDiv.className = "mineral";
+
+        const mineralName = document.createElement("h2");
+        mineralName.textContent = mineral.name;
+
+        const mineralImage = document.createElement("img");
+        mineralImage.src = mineral.image;
+        mineralImage.alt = mineral.name;
+
+        const mineralInfo = document.createElement("p");
+        mineralInfo.textContent = mineral.info;
+
+        mineralDiv.appendChild(mineralName);
+        mineralDiv.appendChild(mineralImage);
+        mineralDiv.appendChild(mineralInfo);
+        container.appendChild(mineralDiv);
     });
 }
 
-// Handle user interactions
-function addInteractionHandlers() {
-    const cards = document.querySelectorAll('.mineral-card');
-    cards.forEach(card => {
-        card.addEventListener('click', () => {
-            alert(`You clicked on ${card.querySelector('h3').innerText}`);
-        });
-    });
-}
-
-// Initialize the app
-loadMinerals().then(addInteractionHandlers);
+// Call the function to display minerals when the window loads
+window.onload = displayMinerals;
