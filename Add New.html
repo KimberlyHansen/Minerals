@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Mineral</title>
+</head>
+<body>
+    <h1>Add New Mineral</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <label for="mineralName">Mineral Name:</label>
+        <input type="text" id="mineralName" name="mineralName" required><br><br>
+
+        <label for="mineralDetails">Mineral Details:</label><br>
+        <textarea id="mineralDetails" name="mineralDetails" rows="4" cols="50" required></textarea><br><br>
+
+        <label for="photoUpload">Upload Photo:</label>
+        <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
