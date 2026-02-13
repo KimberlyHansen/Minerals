@@ -79,15 +79,15 @@
     </style>
 </head>
 <body>
-          
+    <div class="form-container">
+        <h1>Add New Mineral</h1>     
+        
         <div class="upload-section">
             <label for="photoUpload">Step 1: Upload Photo of Mineral *</label>
             <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required>
             <img id="photoPreview" style="display: none;">
         </div>
 
-        <label for="mineralDetails">Mineral Details:</label><br>
-        <textarea id="mineralDetails" name="mineralDetails" rows="4" cols="50" required></textarea><br><br>
         <form id="mineralForm" onsubmit="handleSubmit(event)">
            
                 <h2>Step 2: Enter Mineral Details</h2>
@@ -95,8 +95,7 @@
                 <label for="mineralName">Mineral Name *</label>
                 <input type="text" id="mineralName" name="mineralName" required>
 
-        <label for="photoUpload">Upload Photo:</label>
-        <input type="file" id="photoUpload" name="photoUpload" accept="image/*" required><br><br>
+       
                 <label for="countryOfOrigin">Country of Origin *</label>
                 <select id="countryOfOrigin" name="countryOfOrigin" required>
                     <option value="">Select a country...</option>
@@ -126,8 +125,7 @@
                     <option value="Other">Other</option>
                 </select>
 
-        <input type="submit" value="Submit">
-    </form>
+      
                 <label for="mineralDetails">Description/Details</label>
                 <textarea id="mineralDetails" name="mineralDetails" placeholder="Enter additional details about this mineral..."></textarea>
 
