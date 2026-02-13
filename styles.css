@@ -33,6 +33,12 @@ header h1 {
     font-weight: 600;
 }
 
+header p {
+    margin-top: 10px;
+    font-size: 1.1em;
+    opacity: 0.95;
+}
+
 /* Main content */
 main {
     padding: 40px 20px;
@@ -54,6 +60,15 @@ main p {
     margin-bottom: 40px;
     font-size: 1.1em;
     line-height: 1.6;
+}
+
+/* Button container for main page */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 30px;
 }
 
 /* Minerals Container */
@@ -124,33 +139,12 @@ main p {
 
 .mineral button:hover,
 .btn:hover {
-    background-color: #D85A1A;
+    background-color: #D85B0B;
     box-shadow: 0 4px 12px rgba(243, 111, 33, 0.3);
-    transform: scale(1.02);
+    transform: translateY(-2px);
 }
 
-/* Footer styles */
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #77787B;
-    color: white;
-    margin-top: 40px;
-    font-weight: 500;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    #minerals-container {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 20px;
-    }
-    
-    header h1 {
-        font-size: 1.8em;
-    }
-    
-    main {
-        padding: 20px 10px;
-    }
+.mineral button:active,
+.btn:active {
+    transform: translateY(0);
 }
