@@ -1,5 +1,6 @@
 /**
  * styles.css - Mineral Inventory Styling
+ * SGS Brand Style Implementation
  */
 
 /* General styles */
@@ -10,25 +11,26 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #333;
+    font-family: Arial, Helvetica, 'Segoe UI', sans-serif;
+    background-color: #F5F5F5;
+    color: #2C2C2C;
     min-height: 100vh;
 }
 
-/* Header styles */
+/* Header styles - SGS Silver Gray */
 header {
-    background-color: #2c3e50;
+    background-color: #77787B;
     color: white;
     padding: 30px 20px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
 header h1 {
     font-size: 2.5em;
     margin: 0;
     letter-spacing: 1px;
+    font-weight: 600;
 }
 
 /* Main content */
@@ -39,17 +41,19 @@ main {
 }
 
 main h2 {
-    color: white;
+    color: #77787B;
     text-align: center;
     margin-bottom: 20px;
     font-size: 2em;
+    font-weight: 600;
 }
 
 main p {
-    color: rgba(255, 255, 255, 0.9);
+    color: #666;
     text-align: center;
     margin-bottom: 40px;
     font-size: 1.1em;
+    line-height: 1.6;
 }
 
 /* Minerals Container */
@@ -63,25 +67,27 @@ main p {
 /* Individual Mineral Card */
 .mineral {
     background-color: white;
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border-left: 5px solid #F36F21;
 }
 
 .mineral:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 20px rgba(243, 111, 33, 0.2);
 }
 
 .mineral h2 {
-    color: #2c3e50;
+    color: #77787B;
     margin: 0 0 15px 0;
     font-size: 1.5em;
-    border-bottom: 3px solid #667eea;
+    font-weight: 600;
+    border-bottom: 3px solid #F36F21;
     padding-bottom: 10px;
 }
 
@@ -89,8 +95,9 @@ main p {
     width: 100%;
     height: 250px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 6px;
     margin-bottom: 15px;
+    border: 2px solid #F36F21;
 }
 
 .mineral p {
@@ -100,13 +107,36 @@ main p {
     flex-grow: 1;
 }
 
+/* Call-to-action buttons */
+.mineral button,
+.btn {
+    background-color: #F36F21;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+}
+
+.mineral button:hover,
+.btn:hover {
+    background-color: #D85A1A;
+    box-shadow: 0 4px 12px rgba(243, 111, 33, 0.3);
+    transform: scale(1.02);
+}
+
 /* Footer styles */
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #2c3e50;
+    background-color: #77787B;
     color: white;
     margin-top: 40px;
+    font-weight: 500;
 }
 
 /* Responsive Design */
