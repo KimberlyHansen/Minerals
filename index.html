@@ -7,13 +7,25 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
+    <header class="header">
         <h1>Mineral Inventory</h1>
+        <p>Discover and manage your mineral collection</p>
     </header>
+    
+    <nav class="nav">
+        <a href="#home">Home</a>
+        <a href="#collection">Collection</a>
+        <a href="#about">About</a>
+    </nav>
+    
     <main>
-        <h2>Welcome to the Mineral Inventory</h2>
-        <p>Manage your mineral collection here.</p>
+        <div id="minerals-container" class="inventory"></div>
     </main>
+    
+    <footer class="footer">
+        <p>&copy; 2026 Mineral Inventory. All rights reserved.</p>
+    </footer>
+    
     <script src="script.js"></script>
 </body>
 </html>
