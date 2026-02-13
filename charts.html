@@ -89,7 +89,7 @@
         </div>
 
         <form id="mineralForm" onsubmit="handleSubmit(event)">
-           
+            <div class="details-section" id="detailsSection">  
                 <h2>Step 2: Enter Mineral Details</h2>
                 
                 <label for="mineralName">Mineral Name *</label>
@@ -128,12 +128,6 @@
       
                 <label for="mineralDetails">Description/Details</label>
                 <textarea id="mineralDetails" name="mineralDetails" placeholder="Enter additional details about this mineral..."></textarea>
-
-                <label for="mineralType">Mineral Type/Classification</label>
-                <input type="text" id="mineralType" name="mineralType" placeholder="e.g., Silicate, Oxide, Carbonate...">
-
-                <label for="colorDescription">Color Description</label>
-                <input type="text" id="colorDescription" name="colorDescription" placeholder="e.g., Clear, Blue, Red...">
 
                 <button type="submit">Submit Mineral</button>
             </div>
