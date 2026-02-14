@@ -10,9 +10,9 @@ const minerals = [
         info: "Mica is a shiny silicate mineral that can be split into thin sheets."
     },
     {
-        name: "Feldspar",
-        image: "url/to/feldspar-photo.jpg",
-        info: "Feldspar is the name given to a group of minerals that are all similar."
+        name: "Spodumene",
+        image: "https://www.mindat.org/photo-173689.html",
+        info: "LiAlSi2O6."
     }
 ];
 
