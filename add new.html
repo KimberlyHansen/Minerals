@@ -63,6 +63,10 @@
         button:hover {
             background-color: #5568d3;
         }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
         #photoPreview {
             max-width: 200px;
             margin-top: 15px;
@@ -75,6 +79,19 @@
             background-color: #e8f5e9;
             border-radius: 4px;
             margin-top: 20px;
+        }
+        .error-message {
+            display: none;
+            color: #f44336;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .loading-spinner {
+            display: none;
+            margin-top: 10px;
+            color: #667eea;
         }
     </style>
 </head>
@@ -129,13 +146,15 @@
                 <label for="mineralDetails">Description/Details</label>
                 <textarea id="mineralDetails" name="mineralDetails" placeholder="Enter additional details about this mineral..."></textarea>
 
-                <button type="submit">Submit Mineral</button>
+                <button type="submit" id="submitBtn">Submit Mineral</button>
+                <div class="loading-spinner" id="loadingSpinner">⏳ Uploading...</div>
             </div>
         </form>
 
         <div class="success-message" id="successMessage">
             ✓ Mineral added successfully!
         </div>
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
     <script>
@@ -143,6 +162,9 @@
         const photoPreview = document.getElementById('photoPreview');
         const detailsSection = document.getElementById('detailsSection');
         const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
         // Show details form when photo is uploaded
         photoInput.addEventListener('change', function(event) {
@@ -165,32 +187,68 @@
         });
 
         // Handle form submission
-        function handleSubmit(event) {
+        async function handleSubmit(event) {
             event.preventDefault();
             
-            // Collect form data
+            const file = photoInput.files[0];
             const mineralName = document.getElementById('mineralName').value;
             const countryOfOrigin = document.getElementById('countryOfOrigin').value;
             const mineralDetails = document.getElementById('mineralDetails').value;
 
-            // Here you would typically send this data to a server
-            console.log({
-                mineralName,
-                countryOfOrigin,
-                mineralDetails,
-            });
+            if (!file) {
+                showError('Please select a photo');
+                return;
+            }
 
-            // Show success message
-            successMessage.style.display = 'block';
-            
-            // Reset form after 2 seconds
-            setTimeout(() => {
-                document.getElementById('mineralForm').reset();
-                photoInput.value = '';
-                photoPreview.style.display = 'none';
-                detailsSection.classList.remove('show');
-                successMessage.style.display = 'none';
-            }, 2000);
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('mineralName', mineralName);
+            formData.append('countryOfOrigin', countryOfOrigin);
+            formData.append('mineralDetails', mineralDetails);
+
+            // Show loading state
+            submitBtn.disabled = true;
+            loadingSpinner.style.display = 'block';
+            errorMessage.style.display = 'none';
+
+            try {
+                // Send to server - update the URL to match your backend
+                const response = await fetch('/api/minerals/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                // Show success message
+                successMessage.style.display = 'block';
+                
+                // Reset form after 2 seconds
+                setTimeout(() => {
+                    document.getElementById('mineralForm').reset();
+                    photoInput.value = '';
+                    photoPreview.style.display = 'none';
+                    detailsSection.classList.remove('show');
+                    successMessage.style.display = 'none';
+                    submitBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
+                }, 2000);
+
+            } catch (error) {
+                showError(error.message);
+                submitBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = '✗ Error: ' + message;
+            errorMessage.style.display = 'block';
         }
     </script>
 </body>
