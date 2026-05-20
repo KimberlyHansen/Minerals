@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minerals Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-buttons a, .nav-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            background-color: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .nav-buttons a:hover, .nav-buttons button:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons .logout-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .nav-buttons .logout-btn:hover {
+            background-color: #ff5252;
+        }
+
+        .status {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .login-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 50px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .login-section input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .login-section button {
+            width: 100%;
+            padding: 12px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .login-section button:hover {
+            background-color: #5568d3;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            padding: 15px;
+            background-color: #ffe0e0;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .mineral-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mineral-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .mineral-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background-color: #f0f0f0;
+        }
+
+        .mineral-info {
+            padding: 20px;
+        }
+
+        .mineral-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .mineral-country {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .mineral-details {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mineral-date {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .no-minerals {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.1em;
+        }
+
+        .filter-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-section input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-buttons a, .nav-buttons button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🪨 Minerals Gallery</h1>
+            <p>Explore mineral collections from around the world</p>
+        </header>
+
+        <div id="authStatus" style="display: none;">
+            <div class="nav-buttons">
+                <a href="add%20new.html">➕ Add Mineral</a>
+                <a href="my-minerals.html">📊 My Uploads</a>
+                <button class="logout-btn" onclick="logout()">🔓 Logout</button>
+            </div>
+            <div class="status">
+                Logged in as: <strong id="userEmail"></strong>
+            </div>
+        </div>
+
+        <div id="notAuthStatus" style="display: none;">
+            <div class="nav-buttons">
+                <button onclick="scrollToLogin()">🔐 Login to Upload</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="🔍 Search by mineral name or country..." 
+                onkeyup="filterMinerals()"
+            >
+        </div>
+
+        <div id="loginSection" class="login-section" style="display: none;">
+            <h2>Login to Upload Minerals</h2>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <input type="email" id="loginEmail" placeholder="Email" />
+            <input type="password" id="loginPassword" placeholder="Password (min 12 characters)" />
+            <button onclick="login()">Login</button>
+            <p style="text-align: center; margin-top: 15px; color: #666;">
+                Demo: Use any email and 12+ character password
+            </p>
+        </div>
+
+        <div id="mineralsContainer">
+            <div class="loading">Loading minerals...</div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userEmail = localStorage.getItem('userEmail');
+            
+            if (token && userEmail) {
+                document.getElementById('authStatus').style.display = 'block';
+                document.getElementById('notAuthStatus').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('userEmail').textContent = userEmail;
+            } else {
+                document.getElementById('authStatus').style.display = 'none';
+                document.getElementById('notAuthStatus').style.display = 'block';
+                document.getElementById('loginSection').style.display = 'block';
+            }
+        }
+
+        // Login function
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorMsg = document.getElementById('errorMessage');
+
+            if (!email || !password) {
+                errorMsg.textContent = '⚠️ Please enter email and password';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 12) {
+                errorMsg.textContent = '⚠️ Password must be at least 12 characters';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/minerals/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    errorMsg.textContent = '❌ ' + (result.error || 'Login failed');
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('userEmail', result.user.email);
+                
+                errorMsg.style.display = 'none';
+                checkAuth();
+                loadMinerals();
+
+            } catch (error) {
+                errorMsg.textContent = '❌ Connection error: ' + error.message;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userEmail');
+            checkAuth();
+            loadMinerals();
+        }
+
+        // Scroll to login section
+        function scrollToLogin() {
+            document.getElementById('loginSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load all minerals from the gallery
+        async function loadMinerals() {
+            const container = document.getElementById('mineralsContainer');
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('/api/minerals/gallery', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load minerals');
+                }
+
+                const minerals = await response.json();
+
+                if (minerals.length === 0) {
+                    container.innerHTML = '<div class="no-minerals">No minerals found. Be the first to add one!</div>';
+                    return;
+                }
+
+                displayMinerals(minerals);
+
+            } catch (error) {
+                console.error('Error loading minerals:', error);
+                container.innerHTML = '<div class="no-minerals">Error loading minerals. Please try again.</div>';
+            }
+        }
+
+        // Display minerals in gallery
+        function displayMinerals(minerals) {
+            const container = document.getElementById('mineralsContainer');
+            
+            let html = '<div class="gallery">';
+            
+            minerals.forEach(mineral => {
+                const date = new Date(mineral.created_at).toLocaleDateString();
+                const details = mineral.details ? mineral.details.substring(0, 100) + '...' : 'No description';
+                
+                html += `
+                    <div class="mineral-card">
+                        <img src="${mineral.photo_path}" alt="${mineral.name}" class="mineral-image" onerror="this.src='https://via.placeholder.com/300x250?text=${encodeURIComponent(mineral.name)}'">
+                        <div class="mineral-info">
+                            <h3>${mineral.name}</h3>
+                            <div class="mineral-country">📍 ${mineral.country}</div>
+                            <div class="mineral-details">${details}</div>
+                            <div class="mineral-date">Added: ${date}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+
+            // Store minerals globally for filtering
+            window.allMinerals = minerals;
+        }
+
+        // Filter minerals by search
+        function filterMinerals() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!window.allMinerals) return;
+
+            const filtered = window.allMinerals.filter(mineral => 
+                mineral.name.toLowerCase().includes(searchTerm) ||
+                mineral.country.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('mineralsContainer').innerHTML = 
+                    '<div class="no-minerals">No minerals found matching your search.</div>';
+                return;
+            }
+
+            displayMinerals(filtered);
+        }
+
+        // Initialize on page load
+        checkAuth();
+        loadMinerals();
+
+        // Refresh minerals every 30 seconds
+        setInterval(loadMinerals, 30000);
+    </script>
+</body>
+</html>
