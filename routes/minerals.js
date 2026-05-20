@@ -3,15 +3,44 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const config = require('../config');
+const crypto = require('crypto');
 
 const router = express.Router();
 
-// Configure multer for file uploads
+// Rate limiting middleware
+const uploadLimiter = rateLimit({
+    windowMs: config.SECURITY.RATE_LIMIT_WINDOW_MS,
+    max: config.SECURITY.RATE_LIMIT_MAX_REQUESTS,
+    message: 'Too many upload requests, please try again later'
+});
+
+// JWT verification middleware
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.id;
+        req.userRole = decoded.role;
+        next();
+    } catch (error) {
+        return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+};
+
+// Configure multer for file uploads with security checks
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
         try {
-            // Ensure F: drive directory exists
             await fs.mkdir(config.UPLOAD_DIR, { recursive: true });
             cb(null, config.UPLOAD_DIR);
         } catch (error) {
@@ -19,20 +48,29 @@ const storage = multer.diskStorage({
         }
     },
     filename: (req, file, cb) => {
-        // Generate unique filename
         const timestamp = Date.now();
+        const randomStr = crypto.randomBytes(8).toString('hex');
         const ext = path.extname(file.originalname);
-        const name = path.basename(file.originalname, ext);
-        cb(null, `${name}-${timestamp}${ext}`);
+        cb(null, `mineral-${timestamp}-${randomStr}${ext}`);
     }
 });
 
 const fileFilter = (req, file, cb) => {
-    if (config.ALLOWED_TYPES.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only images are allowed.'));
+    // Validate MIME type
+    if (!config.ALLOWED_TYPES.includes(file.mimetype)) {
+        cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'));
+        return;
     }
+
+    // Additional security: check file extension
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    if (!allowedExts.includes(ext)) {
+        cb(new Error('Invalid file extension'));
+        return;
+    }
+
+    cb(null, true);
 };
 
 const upload = multer({
@@ -41,7 +79,7 @@ const upload = multer({
     limits: { fileSize: config.MAX_FILE_SIZE }
 });
 
-// Initialize database
+// Initialize database with security schema
 const db = new sqlite3.Database(config.DB_PATH, (err) => {
     if (err) {
         console.error('Database error:', err);
@@ -52,6 +90,7 @@ const db = new sqlite3.Database(config.DB_PATH, (err) => {
 });
 
 function initializeDatabase() {
+    // Create minerals table
     db.run(`
         CREATE TABLE IF NOT EXISTS minerals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,14 +98,112 @@ function initializeDatabase() {
             country TEXT NOT NULL,
             details TEXT,
             photo_path TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
+
+    // Create users table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'viewer',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_login DATETIME
+        )
+    `);
+
+    // Create audit log table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            resource_id INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            ip_address TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     `);
 }
 
-// Upload endpoint
-router.post('/upload', upload.single('photo'), (req, res) => {
+// Function to log actions for audit trail
+function logAuditAction(userId, action, resourceId, ipAddress) {
+    const query = `
+        INSERT INTO audit_logs (user_id, action, resource_id, ip_address)
+        VALUES (?, ?, ?, ?)
+    `;
+    db.run(query, [userId, action, resourceId, ipAddress]);
+}
+
+// Authentication endpoint - Login
+router.post('/auth/login', [
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: config.SECURITY.MIN_PASSWORD_LENGTH })
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+
+    db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Verify password
+        bcrypt.compare(password, user.password_hash, (err, isMatch) => {
+            if (err || !isMatch) {
+                logAuditAction(null, 'failed_login', null, req.ip);
+                return res.status(401).json({ error: 'Invalid credentials' });
+            }
+
+            // Generate JWT token
+            const token = jwt.sign(
+                { id: user.id, email: user.email, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: config.SECURITY.TOKEN_EXPIRY }
+            );
+
+            // Update last login
+            db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+            
+            logAuditAction(user.id, 'login', null, req.ip);
+
+            res.json({
+                success: true,
+                token: token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+        });
+    });
+});
+
+// Upload endpoint with authentication
+router.post('/upload', uploadLimiter, verifyToken, [
+    body('mineralName').trim().isLength({ min: 1, max: 100 }),
+    body('countryOfOrigin').trim().isLength({ min: 1 }),
+    body('mineralDetails').trim().isLength({ max: 1000 })
+], upload.single('photo'), (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -74,23 +211,19 @@ router.post('/upload', upload.single('photo'), (req, res) => {
 
         const { mineralName, countryOfOrigin, mineralDetails } = req.body;
 
-        // Validate required fields
-        if (!mineralName || !countryOfOrigin) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
-        // Save to database
         const photoPath = req.file.path;
         const query = `
-            INSERT INTO minerals (name, country, details, photo_path)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO minerals (name, country, details, photo_path, user_id)
+            VALUES (?, ?, ?, ?, ?)
         `;
 
-        db.run(query, [mineralName, countryOfOrigin, mineralDetails || '', photoPath], function(err) {
+        db.run(query, [mineralName, countryOfOrigin, mineralDetails || '', photoPath, req.userId], function(err) {
             if (err) {
                 console.error('Database error:', err);
                 return res.status(500).json({ error: 'Failed to save mineral data' });
             }
+
+            logAuditAction(req.userId, 'upload_mineral', this.lastID, req.ip);
 
             res.json({
                 success: true,
@@ -110,9 +243,15 @@ router.post('/upload', upload.single('photo'), (req, res) => {
     }
 });
 
-// Get all minerals
-router.get('/', (req, res) => {
-    db.all('SELECT * FROM minerals ORDER BY created_at DESC', (err, rows) => {
+// Get all minerals (only user's own minerals unless admin)
+router.get('/', verifyToken, (req, res) => {
+    let query = 'SELECT id, name, country, details, photo_path, created_at FROM minerals WHERE user_id = ? ORDER BY created_at DESC';
+    
+    if (req.userRole === 'admin') {
+        query = 'SELECT id, name, country, details, photo_path, user_id, created_at FROM minerals ORDER BY created_at DESC';
+    }
+
+    db.all(query, [req.userId], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
@@ -121,7 +260,7 @@ router.get('/', (req, res) => {
 });
 
 // Get single mineral
-router.get('/:id', (req, res) => {
+router.get('/:id', verifyToken, (req, res) => {
     db.get('SELECT * FROM minerals WHERE id = ?', [req.params.id], (err, row) => {
         if (err) {
             return res.status(500).json({ error: err.message });
@@ -129,7 +268,27 @@ router.get('/:id', (req, res) => {
         if (!row) {
             return res.status(404).json({ error: 'Mineral not found' });
         }
+
+        // Check ownership
+        if (row.user_id !== req.userId && req.userRole !== 'admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
         res.json(row);
+    });
+});
+
+// Get audit logs (admin only)
+router.get('/admin/audit-logs', verifyToken, (req, res) => {
+    if (req.userRole !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    db.all('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100', (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows);
     });
 });
 
