@@ -98,7 +98,8 @@ function initializeDatabase() {
             country TEXT NOT NULL,
             details TEXT,
             photo_path TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
+            uploaded_by TEXT,
+            user_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
@@ -193,11 +194,43 @@ router.post('/auth/login', [
     });
 });
 
-// Upload endpoint with authentication
-router.post('/upload', uploadLimiter, verifyToken, [
+// Public endpoint - Get all minerals (no authentication required for gallery view)
+router.get('/all', (req, res) => {
+    const query = `
+        SELECT 
+            id, 
+            name as mineralName, 
+            country as countryOfOrigin, 
+            details as mineralDetails, 
+            photo_path as photoUrl,
+            uploaded_by as uploadedBy,
+            created_at as createdAt
+        FROM minerals 
+        ORDER BY created_at DESC
+    `;
+
+    db.all(query, (err, rows) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Failed to fetch minerals' });
+        }
+
+        // Convert file paths to accessible URLs if needed
+        const minerals = (rows || []).map(mineral => ({
+            ...mineral,
+            photoUrl: mineral.photoUrl ? `/uploads/${path.basename(mineral.photoUrl)}` : null
+        }));
+
+        res.json(minerals);
+    });
+});
+
+// Upload endpoint - Public (no authentication required for now)
+router.post('/upload', uploadLimiter, [
     body('mineralName').trim().isLength({ min: 1, max: 100 }),
     body('countryOfOrigin').trim().isLength({ min: 1 }),
-    body('mineralDetails').trim().isLength({ max: 1000 })
+    body('mineralDetails').trim().isLength({ max: 1000 }).optional(),
+    body('uploaderName').trim().isLength({ min: 1, max: 100 })
 ], upload.single('photo'), (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -209,21 +242,19 @@ router.post('/upload', uploadLimiter, verifyToken, [
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const { mineralName, countryOfOrigin, mineralDetails } = req.body;
+        const { mineralName, countryOfOrigin, mineralDetails, uploaderName } = req.body;
 
         const photoPath = req.file.path;
         const query = `
-            INSERT INTO minerals (name, country, details, photo_path, user_id)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO minerals (name, country, details, photo_path, uploaded_by, created_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
 
-        db.run(query, [mineralName, countryOfOrigin, mineralDetails || '', photoPath, req.userId], function(err) {
+        db.run(query, [mineralName, countryOfOrigin, mineralDetails || '', photoPath, uploaderName], function(err) {
             if (err) {
                 console.error('Database error:', err);
                 return res.status(500).json({ error: 'Failed to save mineral data' });
             }
-
-            logAuditAction(req.userId, 'upload_mineral', this.lastID, req.ip);
 
             res.json({
                 success: true,
@@ -232,6 +263,7 @@ router.post('/upload', uploadLimiter, verifyToken, [
                     id: this.lastID,
                     mineralName,
                     countryOfOrigin,
+                    uploadedBy: uploaderName,
                     photoPath: photoPath
                 }
             });
@@ -243,12 +275,12 @@ router.post('/upload', uploadLimiter, verifyToken, [
     }
 });
 
-// Get all minerals (only user's own minerals unless admin)
+// Get all minerals (authenticated users only)
 router.get('/', verifyToken, (req, res) => {
-    let query = 'SELECT id, name, country, details, photo_path, created_at FROM minerals WHERE user_id = ? ORDER BY created_at DESC';
+    let query = 'SELECT id, name, country, details, photo_path, uploaded_by, created_at FROM minerals WHERE user_id = ? ORDER BY created_at DESC';
     
     if (req.userRole === 'admin') {
-        query = 'SELECT id, name, country, details, photo_path, user_id, created_at FROM minerals ORDER BY created_at DESC';
+        query = 'SELECT id, name, country, details, photo_path, uploaded_by, user_id, created_at FROM minerals ORDER BY created_at DESC';
     }
 
     db.all(query, [req.userId], (err, rows) => {
