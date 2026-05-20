@@ -3,22 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mineral Inventory</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Mineral Inventory - Redirecting</title>
+    <script>
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'browse.html';
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .redirect-message {
+            text-align: center;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to the SGS Mineral Inventory</h1>
-        <p>Discover and manage your mineral collection</p>
-    </header>
-    <main>
-        <h2>What would you like to do?</h2>
-        <div class="button-container">
-            <button class="btn" onclick="location.href='Browse.html'">Browse</button>
-        </div>
-        <div class="button-container">
-            <button class="btn" onclick="location.href='add new.html'">Add New</button>
-        </div>
-     </main>
+    <div class="redirect-message">
+        <h1>🪨 Mineral Gallery</h1>
+        <p>Redirecting...</p>
+    </div>
 </body>
 </html>
