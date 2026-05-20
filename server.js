@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const mineralsRouter = require('./routes/minerals');
@@ -25,6 +26,9 @@ app.use(cors(corsOptions));
 // Body parser middleware with size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Serve uploaded files as static content
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Global rate limiting
 const limiter = rateLimit({
@@ -74,5 +78,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`✅ Secure server running on http://localhost:${PORT}`);
-    console.log(`🔐 Security features enabled: JWT, rate limiting, CORS, helmet`);
+    console.log(`🔐 Security features enabled: rate limiting, CORS, helmet`);
 });
