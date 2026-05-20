@@ -23,13 +23,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
         }
         
         .header h1 {
             color: #333;
-            font-size: 2em;
         }
         
         .header a {
@@ -43,19 +40,6 @@
         
         .header a:hover {
             background-color: #5568d3;
-        }
-        
-        .search-container {
-            max-width: 1200px;
-            margin: 0 auto 30px;
-        }
-        
-        .search-container input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
         }
         
         .gallery-container {
@@ -124,7 +108,6 @@
             color: #667eea;
             font-size: 18px;
             margin-top: 40px;
-            grid-column: 1 / -1;
         }
         
         .error {
@@ -135,7 +118,6 @@
             padding: 20px;
             background-color: #ffebee;
             border-radius: 4px;
-            grid-column: 1 / -1;
         }
         
         .empty-state {
@@ -144,7 +126,6 @@
             font-size: 16px;
             margin-top: 40px;
             padding: 40px;
-            grid-column: 1 / -1;
         }
         
         .modal {
@@ -156,7 +137,6 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
         }
         
         .modal.show {
@@ -173,15 +153,12 @@
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            margin: 20px;
         }
         
         .modal-image {
             width: 100%;
             margin-bottom: 20px;
             border-radius: 4px;
-            max-height: 400px;
-            object-fit: cover;
         }
         
         .close-btn {
@@ -199,37 +176,12 @@
         .close-btn:hover {
             color: #333;
         }
-        
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .header a {
-                width: 100%;
-                text-align: center;
-            }
-            
-            .gallery-container {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🪨 Mineral Gallery</h1>
         <a href="add%20new.html">+ Add Mineral</a>
-    </div>
-    
-    <div class="search-container">
-        <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="🔍 Search by mineral name or country..." 
-            onkeyup="filterMinerals()"
-        >
     </div>
     
     <div id="loading" class="loading">⏳ Loading minerals...</div>
@@ -241,7 +193,7 @@
     <div id="mineralModal" class="modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">&times;</button>
-            <img id="modalImage" class="modal-image" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Available'">
+            <img id="modalImage" class="modal-image">
             <h2 id="modalName"></h2>
             <p><strong>Country of Origin:</strong> <span id="modalOrigin"></span></p>
             <p><strong>Description:</strong></p>
@@ -256,9 +208,7 @@
         const errorDiv = document.getElementById('error');
         const emptyStateDiv = document.getElementById('emptyState');
         const modal = document.getElementById('mineralModal');
-        let allMinerals = [];
 
-        // Load all minerals on page load
         window.addEventListener('load', loadMinerals);
 
         async function loadMinerals() {
@@ -269,50 +219,34 @@
                     throw new Error('Failed to load minerals');
                 }
 
-                allMinerals = await response.json();
+                const minerals = await response.json();
                 
                 loadingDiv.style.display = 'none';
 
-                if (!allMinerals || allMinerals.length === 0) {
+                if (!minerals || minerals.length === 0) {
                     emptyStateDiv.style.display = 'block';
-                    galleryContainer.innerHTML = '';
                     return;
                 }
 
-                displayMinerals(allMinerals);
-                errorDiv.style.display = 'none';
+                displayMinerals(minerals);
 
             } catch (error) {
                 loadingDiv.style.display = 'none';
-                emptyStateDiv.style.display = 'none';
                 errorDiv.textContent = '✗ Error loading minerals: ' + error.message;
                 errorDiv.style.display = 'block';
-                console.error('Error:', error);
             }
         }
 
         function displayMinerals(minerals) {
             galleryContainer.innerHTML = '';
-            emptyStateDiv.style.display = 'none';
-            
-            if (minerals.length === 0) {
-                emptyStateDiv.style.display = 'block';
-                return;
-            }
             
             minerals.forEach(mineral => {
                 const card = document.createElement('div');
                 card.className = 'mineral-card';
                 card.onclick = () => openModal(mineral);
                 
-                // Handle image URL - could be a full path or needs /uploads/ prefix
-                let imageUrl = mineral.photoUrl;
-                if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/uploads')) {
-                    imageUrl = '/uploads/' + imageUrl.split('/').pop();
-                }
-                
                 card.innerHTML = `
-                    <img src="${imageUrl || 'https://via.placeholder.com/300x250?text=No+Image'}" alt="${mineral.mineralName}" class="mineral-image" onerror="this.src='https://via.placeholder.com/300x250?text=${encodeURIComponent(mineral.mineralName)}'">
+                    <img src="${mineral.photoUrl || '/placeholder-image.jpg'}" alt="${mineral.mineralName}" class="mineral-image">
                     <div class="mineral-info">
                         <div class="mineral-name">${mineral.mineralName}</div>
                         <div class="mineral-origin">📍 ${mineral.countryOfOrigin}</div>
@@ -325,30 +259,8 @@
             });
         }
 
-        function filterMinerals() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            if (!allMinerals || allMinerals.length === 0) {
-                return;
-            }
-            
-            const filtered = allMinerals.filter(mineral => 
-                mineral.mineralName.toLowerCase().includes(searchTerm) ||
-                mineral.countryOfOrigin.toLowerCase().includes(searchTerm) ||
-                (mineral.uploadedBy && mineral.uploadedBy.toLowerCase().includes(searchTerm))
-            );
-            
-            displayMinerals(filtered);
-        }
-
         function openModal(mineral) {
-            // Handle image URL
-            let imageUrl = mineral.photoUrl;
-            if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/uploads')) {
-                imageUrl = '/uploads/' + imageUrl.split('/').pop();
-            }
-            
-            document.getElementById('modalImage').src = imageUrl || 'https://via.placeholder.com/400x300?text=No+Image';
+            document.getElementById('modalImage').src = mineral.photoUrl || '/placeholder-image.jpg';
             document.getElementById('modalName').textContent = mineral.mineralName;
             document.getElementById('modalOrigin').textContent = mineral.countryOfOrigin;
             document.getElementById('modalDetails').textContent = mineral.mineralDetails || 'No description provided';
@@ -360,15 +272,11 @@
             modal.classList.remove('show');
         }
 
-        // Close modal when clicking outside of it
         window.onclick = function(event) {
             if (event.target === modal) {
                 closeModal();
             }
         }
-        
-        // Refresh minerals every 30 seconds
-        setInterval(loadMinerals, 30000);
     </script>
 </body>
 </html>
